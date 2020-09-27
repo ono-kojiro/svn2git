@@ -38,6 +38,17 @@ echo This is README > README.txt
 git add README.txt
 git commit -m "[git] add README.txt"
 git push origin master
+
+git branch develop
+git checkout develop
+mkdir app
+touch app/main.c
+git add app/main.c
+git commit -m "[git] add app/main.c"
+git push origin develop
+
+git checkout master
+
 popd
 
 

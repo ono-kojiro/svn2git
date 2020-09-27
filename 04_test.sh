@@ -11,6 +11,8 @@ echo update svn and commit
 pushd svn_work
 
 echo "#include <stdio.h>" > main.c
+echo "/* [svn] add include in main.c */" >> main.c
+
 svn commit -m "[svn] add include in main.c"
 
 popd

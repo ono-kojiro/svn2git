@@ -31,11 +31,26 @@ echo add main.c in svn trunk
 cat - << 'EOS' > main.c
 #include <stdio.h>
 
-int main(int argc, char **argv)
+/* comment 1 */
+
+/* comment 2 */
+
+/* comment 3 */
+
+int test()
 {
-	printf("Hello World\n");
+	printf("This is test.\n");
 	return 0;
 }
+
+/* comment 4 */
+
+int main(int argc, char **argv)
+{
+	printf("Hello SVN World\n");
+	return 0;
+}
+
 
 EOS
 
@@ -80,6 +95,33 @@ svn commit -m "[svn] add workspace.txt in svn_work"
 
 mkdir build
 touch build/main.c
+
+cat - << 'EOS' > build/main.c
+#include <stdio.h>
+
+/* comment 1 */
+
+/* comment 2 */
+
+/* comment 3 */
+
+int test()
+{
+	printf("This is test.\n");
+	return 0;
+}
+
+/* comment 4 */
+
+int main(int argc, char **argv)
+{
+	printf("Hello SVN World\n");
+	return 0;
+}
+
+
+EOS
+
 svn add build
 svn commit -m "[svn] add build directory and main.c"
 svn update

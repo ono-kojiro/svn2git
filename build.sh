@@ -8,7 +8,7 @@ usage()
 	exit 0
 }
 
-build()
+all()
 {
 	sh 01_create_svn_repo.sh
 	sh 02_create_git_repo.sh
@@ -16,6 +16,10 @@ build()
 	sh 04_test.sh
 	sh 05_upload.sh
 	sh 06_check.sh
+
+	sh 11_merge_to_dir.sh
+	#sh 12_update_app.sh
+	#sh 13_merge_app_to_top.sh
 
 }
 
