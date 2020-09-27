@@ -10,10 +10,16 @@ source ./config.bashrc
 echo update svn and commit
 pushd svn_work
 
-echo "#include <stdio.h>" > main.c
-echo "/* [svn] add include in main.c */" >> main.c
+cat - << 'EOS' >> main.c
+int hoge()
+{
+	printf("hoge\n");
+	return 0;
+}
 
-svn commit -m "[svn] add include in main.c"
+EOS
+
+svn commit -m "[svn] add function hoge() in main.c"
 
 popd
 

@@ -14,7 +14,7 @@ git merge \
 	-X subtree=app \
 	--allow-unrelated-histories \
 	-m 'merge svn2git/svn/trunk' \
-	svn/trunk
+	svn-trunk
 
 git push origin develop
 

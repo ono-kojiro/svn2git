@@ -17,7 +17,7 @@ git svn init \
 git svn fetch
 
 git checkout svn/trunk
-git checkout -b svn/trunk
+git checkout -b svn-trunk
 
 git gc --aggressive
 

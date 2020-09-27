@@ -6,16 +6,21 @@ source ./config.bashrc
 
 pushd svn2git
 
-git checkout svn/trunk
+git checkout svn-trunk
 
-echo "int main()" >> main.c
-echo "{" >> main.c
-echo "}" >> main.c
+cat - << 'EOS' >> main.c
+
+int git_func()
+{
+	return 0;
+}
+
+EOS
 
 git add main.c
-git commit -m '[git] add main function'
+git commit -m '[git] add git_func'
 
-git push origin svn/trunk
+git push origin svn-trunk
 git svn dcommit
 popd
 
