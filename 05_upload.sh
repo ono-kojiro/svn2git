@@ -6,7 +6,7 @@ source ./config.bashrc
 
 pushd svn2git
 
-git checkout svn-trunk
+git checkout svn/trunk
 
 cat - << 'EOS' >> main.c
 
@@ -20,7 +20,7 @@ EOS
 git add main.c
 git commit -m '[git] add git_func'
 
-git push origin svn-trunk
+git push origin svn/trunk
 git svn dcommit
 popd
 

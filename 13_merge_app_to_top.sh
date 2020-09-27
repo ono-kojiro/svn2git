@@ -10,7 +10,7 @@ git filter-branch --subdirectory-filter app HEAD
 
 git commit -m '[git] subdirectory-filter of develop branch'
 
-git checkout svn-trunk
+git checkout svn/trunk
 git clean -fdx
 git merge -X theirs \
 	--allow-unrelated-histories -m 'merge develop branch' tmp
