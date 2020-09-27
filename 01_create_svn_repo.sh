@@ -4,20 +4,20 @@ set -e
 
 source ./config.bashrc
 
-rm -rf svnrepo
+rm -rf $repo_svn
 
 echo create repository
-svnadmin create svnrepo
+svnadmin create $repo_svn
 
 echo create standard layout in repository
 svn mkdir \
 	$svn_url/trunk \
 	$svn_url/tags \
 	$svn_url/branches \
-	-m "create standard layout" --parents
+	-m "[svn] create standard layout" --parents
 
 echo create common directory
-svn mkdir $svn_url/common -m "create common directory" --parents
+svn mkdir $svn_url/common -m "[svn] create common directory" --parents
 
 svn ls $svn_url
 
@@ -40,7 +40,7 @@ int main(int argc, char **argv)
 EOS
 
 svn add main.c
-svn commit -m "add main.c in svn_work"
+svn commit -m "[svn] add main.c in svn_work"
 
 cat - << 'EOS' > test.c
 #include <stdio.h>
@@ -54,9 +54,9 @@ EOS
 
 echo add test.c in svn trunk
 svn add test.c
-svn commit -m "add test.c in svn_work"
+svn commit -m "[svn] add test.c in svn_work"
 
-svn copy -m "copy from trunk to branches/v0.0.1" . $svn_url/branches/v0.0.1
+svn copy -m "[svn] copy from trunk to branches/v0.0.1" . $svn_url/branches/v0.0.1
 svn switch $svn_url/branches/v0.0.1
 svn update
 
@@ -65,7 +65,7 @@ cat - << 'EOS' > version.h
 EOS
 
 svn add version.h
-svn commit -m "add version.h in branch v0.0.1"
+svn commit -m "[svn] add version.h in branch v0.0.1"
 svn update
 
 svn switch $svn_url/trunk
@@ -76,7 +76,16 @@ svn copy -m "copy from trunk to common/workspace" . $svn_url/common/workspace
 svn switch $svn_url/common/workspace
 echo workspace > workspace.txt
 svn add workspace.txt
-svn commit -m "add workspace.txt in svn_work"
+svn commit -m "[svn] add workspace.txt in svn_work"
+
+mkdir build
+touch build/main.c
+svn add build
+svn commit -m "[svn] add build directory and main.c"
+svn update
+
+svn switch --ignore-ancestry $svn_url/common/workspace/build
+svn update
 
 cd ..
 

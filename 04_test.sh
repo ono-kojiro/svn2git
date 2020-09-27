@@ -2,15 +2,21 @@
 
 set -e
 
+echo $0
+
 source ./config.bashrc
 
-cd git_work
+### update svn
+echo update svn and commit
+pushd svn_work
 
-git checkout svn/trunk
-# git switch -c svn/trunk
+echo "#include <stdio.h>" > main.c
+svn commit -m "[svn] add include in main.c"
 
-git svn info
-git branch -a
+popd
 
-cd ..
+echo git svn rebase
+pushd svn2git
+git svn rebase
+popd
 

@@ -1,17 +1,23 @@
 #!/bin/sh
 
-set -e
+#set -e
 
 source ./config.bashrc
 
-cd svn_work
+echo start
+
+pushd svn_work
+echo svn update
 svn update
-grep "This is commit from git" foo.txt
+
+echo svn log
+svn log | grep '\[git\] add main function'
+
 if [ "$?" = "0" ]; then
-	echo commit of git found in svn		
+	echo OK : commit of git found in svn		
 else
-	echo commit of git NOT found in svn
+	echo NG : commit of git NOT found in svn
 fi
 
-cd ..
+popd
 

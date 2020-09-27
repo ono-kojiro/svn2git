@@ -4,16 +4,23 @@ set -e
 
 source ./config.bashrc
 
-cd git_work
+pushd svn2git
 
 git checkout svn/trunk
 
-echo "This is commit from git" > foo.txt
-git add foo.txt
-git commit -m 'add foo.txt in git_work'
+echo "int main()" >> main.c
+echo "{" >> main.c
+echo "}" >> main.c
+
+git add main.c
+git commit -m '[git] add main function'
 
 git push origin svn/trunk
 git svn dcommit
+popd
 
-cd ..
+pushd svn_work
+svn update
+popd
+
 

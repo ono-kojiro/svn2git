@@ -2,4 +2,9 @@ gitrepo.git
 svnrepo/
 git_work/
 svn_work/
+svn2git/
+repo_git.git/
+repo_svn.svn/
+repo_svn2git.git/
+
 
