@@ -57,36 +57,24 @@ def checkout_git(url, ext_dir) :
     pass
 
 def main() :
-    git_exclude = '.git/info/exclude'
-
-    fp = open(git_exclude, mode='a', encoding='utf-8')
-
     cmd = 'git svn show-externals'
 
     for line in get_command_output(cmd):
-        print("'" + line + "'")
-
         if line == '' :
             continue
 
         m = re.search(r'^# (.*/)$', line)
         if m :
-            # directory path
-            #work_dir = '.' + m.group(1)
             continue
 
         m = re.search(r'([^\s]+)\s+(.+)', line)
         if m :
-            print('found')
-
             ext_dir = '.' + m.group(1)
             url = m.group(2)
-            print("INFO : write {0} in {1}".format(ext_dir, git_exclude))
-            fp.write('{0}\n'.format(ext_dir))
-            checkout_git(url, ext_dir)
-
-
-    fp.close()        
+            
+            cmd = 'git -C {0} svn rebase'.format(ext_dir)
+            print('{0}'.format(cmd))
+            subprocess.run(cmd, shell=True, encoding='utf-8')
         
 if __name__ == "__main__" :
     main()
