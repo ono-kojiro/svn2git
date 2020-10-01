@@ -34,6 +34,14 @@ def git_init(ext_dir) :
     for line in get_command_output(cmd) :
         print(line)
 
+    cmd = 'git -C {0} commit '.format(ext_dir) + \
+        '--allow-empty ' \
+        '-m "first commit"'.format(ext_dir)
+    print('CMD : {0}'.format(cmd))
+    for line in get_command_output(cmd) :
+        print(line)
+
+
 def git_svn_init(url, ext_dir) :
     
     cmd = 'git -C {0} svn init --prefix=svn/ {1}'.format(ext_dir, url)
@@ -48,12 +56,74 @@ def git_svn_fetch(rev, ext_dir) :
     for line in get_command_output(cmd) :
         print(line)
 
+def get_repos_root_url(url) :
+    cmd = 'LANG=C svn info --show-item ' \
+        'repos-root-url {0'.format(url)
+
+    res = ''
+
+    print('CMD : {0}'.format(cmd))
+    for line in get_command_output(cmd) :
+        res = line
+
+    return res
+
+def get_relative_url(url) :
+    cmd = 'LANG=C svn info --show-item ' \
+        'relative-url {0'.format(url)
+
+    res = ''
+
+    print('CMD : {0}'.format(cmd))
+    for line in get_command_output(cmd) :
+        res = re.sub(r'^\^/', '', line)
+
+    return res
+    
+def git_svn_info(url) :
+    url = ''
+    repos_root_url = ''
+
+    cmd = 'LANG=C svn git -C {0} svn info'.format(ext_dir)
+    print('CMD : {0}'.format(cmd))
+    for line in get_command_output(cmd) :
+        print(line)
+        m = re.search(r'^URL : (.+)', line)
+        if m :
+            url = m.group(1)
+
+        m = re.search(r'^Repository Root: (.+)', line)
+        if m :
+            repos_root_url = m.group(1)
+
+    relative_url = url.replace(repos_root_url, '')
+    relative_url = re.sub(r'/$', '', relative_url)
+
+    return repos_root_url, relative_url
+
+def update_git_svn_config(repos_root_url, relative_url) :
+    cmd = \
+        'git config svn-remote.svn.url {0}'.format(repos_root_url)
+    for line in get_command_output(cmd) :
+        print(line)
+
+    cmd = \
+        'git config svn-remote.svn.fetch ' \
+        '{0}:refs/remotes/svn/trunk'.format(relative_url)
+    for line in get_command_output(cmd) :
+        print(line)
 
 def init_git_svn(url, rev, ext_dir) :
 
     git_init(ext_dir)
+    
+    relative_url = get_relative_url(url)
+    repos_root_url = get_repos_root_url(url)
 
     git_svn_init(url, ext_dir)
+
+
+    update_git_svn_config(repos_root_url, relative_url)
 
     git_svn_fetch(rev, ext_dir)
 
