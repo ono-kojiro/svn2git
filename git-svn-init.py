@@ -34,6 +34,22 @@ def git_init(ext_dir) :
     for line in get_command_output(cmd) :
         print(line)
 
+def git_svn_info(target_dir) :
+    items = {}
+
+    cmd = 'git -C {0} svn info'.format(target_dir)
+    print('CMD : {0}'.format(cmd))
+    for line in get_command_output(cmd) :
+        print(line)
+        m = re.search(r'^([^:]+): (.+)', line)
+        if m :
+            key = m.group(1)
+            val = m.group(2)
+            key = key.replace(' ', '_')
+            items[key] = val
+
+    return items
+
 def git_svn_init(url, ext_dir) :
     
     cmd = 'git -C {0} svn init --prefix=svn/ {1}'.format(ext_dir, url)
@@ -116,9 +132,69 @@ def split_externals(work_dir, line) :
 
     return url, rev, ext_dir
 
+def extract_schema(url) :
+    schema = ''
+
+    m = re.search(r'^([^:]+:)//', url)
+    if m :
+        schema = m.group(1)
+
+    return schema
+
+def extract_schema_and_hostname(url) :
+    schema_host = ''
+    
+    m = re.search(r'^([^:]+:///?([^/]+))/', url)
+    if m :
+        schema_host = m.group(1)
+
+    return schema_host
+
+def update_url(url, infos) :
+    repository_root = infos['Repository_Root']
+
+    while 1:
+        m = re.search(r'^//', url)
+        if m :
+            # copy schema from repository root
+            schema = extract_schema(url)
+            url = schema + url
+            break
+
+        m = re.search(r'^\^/', url)
+        if m :
+            # relative path to repository root
+            url = re.sub(r'^\^', '', url)
+            url = infos['URL'] + url
+            break
+
+        m = re.search(r'^/[^/]', url)
+        if m :
+            # copy schema and hostname
+            schema_host = extract_schema_and_hostname(infos['URL'])
+            url = schema_host + url
+            break
+        
+        m = re.search(r'^\.\./', url)
+        if m :
+            # relative path to parent directory
+            print('not supported yet')
+            sys.exit(1)
+
+
+        print('invalid external url, "{0}"'.format(url))
+        sys.exit(1)
+        
+    return url
+        
+
 def main() :
     git_exclude = '.git/info/exclude'
     fp = open(git_exclude, mode='a', encoding='utf-8')
+
+    target_dir = '.'
+
+    infos = git_svn_info(target_dir)
 
     work_dir = ''
 
@@ -137,6 +213,8 @@ def main() :
             continue
 
         url, rev, ext_dir = split_externals(work_dir, line)
+
+        url = update_url(url, infos)
 
         
         if url != '' and ext_dir != '':
