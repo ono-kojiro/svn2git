@@ -1,33 +1,16 @@
 #!/usr/bin/env python3
 
 import sys
-
+import getopt
 import re
 
 import os
 import pathlib
+import json
 
 import subprocess
 
 #import pygit2
-
-def get_command_output(cmd) :
-    proc = subprocess.Popen(
-        cmd,
-        shell=True,
-        encoding='utf-8',
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT
-    )
-
-    while True:
-        line = proc.stdout.readline()
-        if line :
-            line = re.sub(r'\r?\n?', '', line)
-            yield line
-
-        if not line and proc.poll() is not None:
-            break
 
 def git_init(ext_dir) :
 
@@ -152,7 +135,7 @@ def extract_schema_and_hostname(url) :
 
     return schema_host
 
-def update_url(url, infos) :
+def update_url(url, cwd, infos) :
     repository_root = infos['Repository_Root']
 
     while 1:
@@ -180,75 +163,107 @@ def update_url(url, infos) :
         m = re.search(r'^\.\./', url)
         if m :
             # relative path to parent directory
-            url = infos['URL'] + '/' + url
-            #print('not supported yet')
-            #sys.exit(1)
+            url = infos['URL'] + '/' + cwd + '/' + url
 
+            # remove /./
+            url = re.sub(r'/./', '/', url)
+
+            # remove /xxx/../
+            url = re.sub(r'/[^/]+/\.\./', '/', url)
+            
+            break
 
         print('invalid external url, "{0}"'.format(url))
         sys.exit(1)
         
     return url
-        
+
+def read_json(filepath) :
+    with open(filepath, mode='r', encoding='utf-8') as fp :
+        data = json.load(fp)
+
+    return data
 
 def main() :
-    git_exclude = '.git/info/exclude'
-    fp = open(git_exclude, mode='a', encoding='utf-8')
-
-    target_dir = '.'
-
-    infos = {}
-
-
-    work_dir = ''
-
-    cmd = 'git svn show-externals'
-
-    items = []
-
-    for line in get_command_output(cmd):
-        print("LINE : '{0}'".format(line))
-        if line == '' :
-            continue
-
-        m = re.search(r'^# (.*/)$', line)
-        if m :
-            work_dir = m.group(1)
-            continue
-
+    try:
+        opts, args = getopt.getopt(
+            sys.argv[1:],
+            "hvo:",
+            [
+                "help",
+                "version",
+                "output="
+            ]
+        )
+    except getopt.GetoptError as err:
+        print(str(err))
+        sys.exit(2)
     
-        infos = git_svn_info(work_dir)
-
-        url, rev, ext_dir = split_externals(work_dir, line)
-
-        url = update_url(url, infos)
-
-        
-        if url != '' and ext_dir != '':
-            ext_dir = '.' + work_dir + ext_dir
-            
-            fp.write('{0}\n'.format(ext_dir))
-
-            item = {
-                'url' : url,
-                'rev' : rev,
-                'ext_dir' : ext_dir
-            }
-
-            items.append(item)
-
-    for item in items :
-        url = item['url']
-        rev = item['rev']
-        ext_dir = item['ext_dir']
-
-        checkout_git(url, rev, ext_dir)
-
-        #cmd = 'git -C {0} svn rebase'.format(ext_dir)
-        #print('{0}'.format(cmd))
-        #subprocess.run(cmd, shell=True, encoding='utf-8')
+    output = None
     
-    fp.close()
+    for o, a in opts:
+        if o == "-v":
+            usage()
+            sys.exit(0)
+        elif o in ("-h", "--help"):
+            usage()
+            sys.exit(0)
+        elif o in ("-o", "--output"):
+            output = a
+        else:
+            assert False, "unknown option"
+    
+    ret = 0
+    
+    if output == None :
+        print("no output option")
+        ret += 1
+    
+    if ret != 0:
+        sys.exit(1)
+
+    externals = []
+    svn_info = {}
+
+    for arg in args :
+        data = read_json(arg)
+
+        if 'externals' in data :
+            externals = data['externals']
+        elif 'svn_info' in data :
+            svn_info = data['svn_info']
+
+    if not 'URL' in svn_info :
+        print('no URL information')
+        ret += 1
+
+    if len(externals) == 0 :
+        print('no externals')
+        ret += 1
+
+    if ret :
+        sys.exit(1)
+    
+    with open(output, mode='w', encoding='utf-8') as fp :
+        for item in externals :
+            cwd = item['cwd']
+            ext_dir = item['ext_dir']
+            rev = item['rev']
+            url = item['url']
+
+            print('update url, "{0}"'.format(url))
+            url = update_url(url, cwd, svn_info)
+            print('new url, "{0}"'.format(url)) 
+            item['url'] = url
+
+        fp.write(
+            json.dumps(
+                externals,
+                ensure_ascii=False,
+                sort_keys=True,
+                indent='\t'
+            )
+        )
 
 if __name__ == "__main__" :
     main()
