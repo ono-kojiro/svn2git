@@ -150,7 +150,7 @@ def update_url(url, cwd, infos) :
         if m :
             # relative path to repository root
             url = re.sub(r'^\^', '', url)
-            url = infos['URL'] + url
+            url = infos['Repository_Root'] + url
             break
 
         m = re.search(r'^/[^/]', url)
@@ -173,8 +173,8 @@ def update_url(url, cwd, infos) :
             
             break
 
-        print('invalid external url, "{0}"'.format(url))
-        sys.exit(1)
+        # like https://xxxx 
+        break
         
     return url
 
@@ -183,6 +183,10 @@ def read_json(filepath) :
         data = json.load(fp)
 
     return data
+
+def append_exclude(filepath, ext_dir) :
+    with open(filepath, mode='a', encoding='utf-8') as fp :
+        fp.write("{0}\n".format(ext_dir))
 
 def main() :
     try:
@@ -251,10 +255,36 @@ def main() :
             rev = item['rev']
             url = item['url']
 
+            print('cwd : {0}'.format(cwd))
             print('update url, "{0}"'.format(url))
             url = update_url(url, cwd, svn_info)
-            print('new url, "{0}"'.format(url)) 
+            print('new url, "{0}"'.format(url))
             item['url'] = url
+            cmd = 'svn info --show-item url {0}'.format(url)
+            subprocess.run(cmd, shell=True, check=True)
+
+            append_exclude('.git/info/exclude', ext_dir)
+           
+            if not os.path.isdir(ext_dir) :
+                os.makedirs(ext_dir)
+            
+            cmd = 'git init {0}'.format(ext_dir)
+            print('CMD : {0}'.format(cmd))
+            subprocess.run(cmd, shell=True, check=True)
+
+            cmd = 'git -C {0} svn init --prefix=svn/ {1}'.format(ext_dir, url)
+            print('CMD : {0}'.format(cmd))
+            try :
+                subprocess.run(cmd, shell=True, check=True)
+            except :
+                pass
+
+            cmd = 'git -C {0} svn fetch --all'.format(ext_dir)
+            print('CMD : {0}'.format(cmd))
+            subprocess.run(cmd, shell=True, check=True)
+
+
+            print('')
 
         fp.write(
             json.dumps(
